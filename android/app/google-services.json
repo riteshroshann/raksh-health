@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "20235643592",
+    "project_id": "raksh-health",
+    "storage_bucket": "raksh-health.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20235643592:android:3b8c4eba27af9814e813fd",
+        "android_client_info": {
+          "package_name": "com.example.raksh_health"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQu6xUNl47GF6kZGy5RP9TtGCdSSvv90A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
