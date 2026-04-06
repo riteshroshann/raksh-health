@@ -1,44 +1,25 @@
-# 🛡️ Raksh Health - AI-Native Healthcare Platform
+# 🛡️ Raksh Health - AI-Native Health Vault
 
-**Raksh Health** is a sophisticated, patient-first health management platform designed for the Indian healthcare ecosystem. It bridges the gap between fragmented medical records and intelligent, actionable health insights.
-
----
-
-## 🚀 Key Features
-
-- **Health Vault**: Secure, glass-morphic document management system.
-- **AI Diagnosis Pipeline**:
-    - **OCR**: Integrated Google Cloud Vision for precise document text extraction.
-    - **Extraction**: Claude 3.5 Sonnet-powered clinical parsing (Lab Reports, Prescriptions, Doctor Notes).
-- **Relational Sync**: Automatic structured data entry into Lab Results and Medication trackers.
-- **Secure Auth**: Dual-method authentication (Phone OTP + Google Sign-In).
+**Raksh Health** is a patient-first health management platform designed for the Indian healthcare ecosystem. High-trust, ultra-premium, and AI-powered.
 
 ---
 
-## 🧠 Technology Stack
-
-- **Frontend**: Flutter (Riverpod 3.x, Custom Glassmorphism).
-- **Backend**: Supabase (PostgreSQL, Edge Functions).
-- **AI Models**: 
-    - Google Cloud Vision (OCR).
-    - Claude 3.5 Sonnet (Information Extraction).
-- **Storage**: Supabase Secure Storage with Relational Scoping (`auth.uid -> profile_id`).
+### 🏛️ The 4 Pillars
+- 🩸 **Tests**: Sugar, Thyroid, CBC trends.
+- ☢️ **Scans**: Secure X-Ray, MRI, CT storage.
+- 💊 **Medicines**: Active tracking & Smart reminders.
+- 🩺 **Doctor Visits**: Seamless prescription parsing.
 
 ---
 
-## 🛠️ Development Setup
-
-1. **Environment Variables**:
-   Ensure the following are set in your Supabase project:
-   - `GOOGLE_CLOUD_VISION_API_KEY`
-   - `ANTHROPIC_API_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-
-2. **Flutter Configuration**:
-   - Update `lib/config/supabase_config.dart` with your project URL and Anon Key.
+### 🧠 Modern Tech Stack
+- **Flutter**: Riverpod, Ethereal Glassmorphism Design System.
+- **Supabase**: PostgreSQL, Edge Functions, Secure RLS.
+- **AI Engine**: Claude 3.5 Sonnet & Google Cloud Vision.
 
 ---
 
-## 📄 License & Privacy
+### 🚀 Roadmap & Progress
+Check our detailed project status here: [PROJECT_STATUS.md](file:///d:/dev/raksh/docs/status/project_status.md)
 
-Your data is private and encrypted by default. Built for the modern, safety-conscious patient.
+**Overall Completion**: 68% | UI Overhaul: 100%
