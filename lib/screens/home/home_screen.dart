@@ -5,241 +5,270 @@ import 'package:raksh_health/config/app_theme.dart';
 import 'package:raksh_health/widgets/glass_container.dart';
 import 'package:raksh_health/repositories/auth_repository.dart';
 import 'package:raksh_health/repositories/profile_repository.dart';
-import 'package:raksh_health/utils/ui_utils.dart';
 import 'package:raksh_health/features/documents/upload_document_screen.dart';
+import 'package:raksh_health/features/vault/document_list_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const _HomeDashboard(),
+    const DocumentListScreen(),
+    const UploadDocumentScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0A0F1E), Color(0xFF1A1F3D), Color(0xFF0A0F1E)],
+              ),
+            ),
+          ),
+          
+          IndexedStack(
+            index: _currentIndex,
+            children: _screens,
+          ),
+        ],
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+      child: GlassContainer(
+        borderRadius: 30,
+        blur: 30,
+        opacity: 0.1,
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppTheme.secondaryColor,
+          unselectedItemColor: Colors.white24,
+          showSelectedLabels: true,
+          showUnselectedLabels: false,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.house), 
+              activeIcon: Icon(CupertinoIcons.house_fill), 
+              label: 'Home'
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.lock_shield), 
+              activeIcon: Icon(CupertinoIcons.shield_fill), 
+              label: 'Vault'
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.add_circled), 
+              activeIcon: Icon(CupertinoIcons.plus_circle_fill), 
+              label: 'Upload'
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeDashboard extends ConsumerWidget {
+  const _HomeDashboard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      extendBody: true,
-      body: Stack(
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(profileAsync, ref),
+            const SizedBox(height: 32),
+            _buildQuickActions(context),
+            const SizedBox(height: 32),
+            _buildVitalsCard(),
+            const SizedBox(height: 32),
+            _buildGridActions(),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AsyncValue<Map<String, dynamic>?> profileAsync, WidgetRef ref) {
+    return profileAsync.when(
+      data: (profile) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF0A0F1E), Color(0xFF141A33)],
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Hello, ${profile?['full_name']?.split(' ')[0] ?? 'User'}', 
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const Text('Your health shield is active', 
+                style: TextStyle(fontSize: 14, color: Colors.white54, fontWeight: FontWeight.w300)),
+            ],
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: profileAsync.when(
-                          data: (profile) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Namaste ${profile?['full_name'] ?? '🙏'}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (profile?['raksh_id'] != null)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 4, bottom: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    'ID: ${profile?['raksh_id']}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppTheme.secondaryColor,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                'How are you feeling today?',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
-                            ],
-                          ),
-                          loading: () => const Text('Namaste 🙏', style: TextStyle(color: Colors.white, fontSize: 18)),
-                          error: (err, stack) => const Text('Namaste 🙏', style: TextStyle(color: Colors.white, fontSize: 18)),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () async {
-                          try {
-                            await ref.read(authRepositoryProvider).signOut();
-                          } catch (e) {
-                            if (context.mounted) context.showSnackBar('Logout failed: $e', isError: true);
-                          }
-                        },
-                        child: const CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppTheme.glassColor,
-                          child: Icon(CupertinoIcons.person_fill, color: Colors.white, size: 24),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 48),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.9,
-                    children: const [
-                      FeatureCard(
-                        title: 'Health Vault',
-                        subtitle: 'Secure medical records',
-                        icon: CupertinoIcons.lock_shield_fill,
-                        iconColor: AppTheme.primaryColor,
-                        glowColor: AppTheme.primaryColor,
-                      ),
-                      FeatureCard(
-                        title: 'Medicines',
-                        subtitle: 'Reminders & Tracking',
-                        icon: CupertinoIcons.capsule_fill,
-                        iconColor: Colors.blueAccent,
-                        glowColor: Colors.blueAccent,
-                      ),
-                      FeatureCard(
-                        title: 'Lab Reports',
-                        subtitle: 'Diagnosis results',
-                        icon: CupertinoIcons.chart_bar_fill,
-                        iconColor: Colors.greenAccent,
-                        glowColor: Colors.greenAccent,
-                      ),
-                      FeatureCard(
-                        title: 'Doctor Visits',
-                        subtitle: 'Upcoming appointments',
-                        icon: Icons.medical_services,
-                        iconColor: Colors.orangeAccent,
-                        glowColor: Colors.orangeAccent,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Recent Reports',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  const SizedBox(height: 16),
-                  GlassContainer(
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(CupertinoIcons.doc_text, color: Colors.white),
-                        ),
-                        const SizedBox(width: 16),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Blood Test Result', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                            Text('April 5th, 2026', style: TextStyle(color: Colors.white38, fontSize: 13)),
-                          ],
-                        ),
-                        const Spacer(),
-                        const Icon(CupertinoIcons.chevron_right, color: Colors.white24),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: GlassContainer(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              borderRadius: 0,
-              blur: 25,
-              opacity: 0.12,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Icon(CupertinoIcons.house_fill, color: AppTheme.secondaryColor, size: 28),
-                  Icon(CupertinoIcons.doc_fill, color: Colors.white.withValues(alpha: 0.4), size: 28),
-                  Icon(CupertinoIcons.capsule, color: Colors.white.withValues(alpha: 0.4), size: 28),
-                  Icon(CupertinoIcons.person_circle, color: Colors.white.withValues(alpha: 0.4), size: 28),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.square_arrow_right, color: Colors.white24),
+            onPressed: () => ref.read(authRepositoryProvider).signOut(),
           ),
         ],
       ),
-      floatingActionButton: Container(
-        height: 64,
-        width: 64,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          gradient: const LinearGradient(colors: [AppTheme.primaryColor, AppTheme.secondaryColor]),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => const Text('Error loading profile'),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _ActionItem(icon: CupertinoIcons.chat_bubble_text, label: 'AI Chat', color: Colors.blueAccent),
+        _ActionItem(icon: CupertinoIcons.calendar, label: 'Booking', color: Colors.purpleAccent),
+        _ActionItem(icon: CupertinoIcons.timer, label: 'Stats', color: Colors.orangeAccent),
+        _ActionItem(icon: CupertinoIcons.ellipsis, label: 'More', color: Colors.tealAccent),
+      ],
+    );
+  }
+
+  Widget _buildVitalsCard() {
+    return GlassContainer(
+      child: const Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Real-time Vitals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Icon(CupertinoIcons.waveform_path_ecg, size: 18, color: AppTheme.secondaryColor),
+              ],
+            ),
+            SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _VitalInfo(label: 'Weight', value: '72', unit: 'kg', icon: CupertinoIcons.gauge),
+                _VitalInfo(label: 'Sleep', value: '7.5', unit: 'hrs', icon: CupertinoIcons.moon),
+                _VitalInfo(label: 'BPM', value: '72', unit: 'bpm', icon: CupertinoIcons.heart),
+              ],
             ),
           ],
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UploadDocumentScreen()),
-            );
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(CupertinoIcons.add, color: Colors.white, size: 32),
-        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  Widget _buildGridActions() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: 1.1,
+      children: const [
+        _FeatureCard(
+          title: 'Medicines',
+          subtitle: 'Active tracking',
+          icon: CupertinoIcons.capsule,
+          color: Colors.blueAccent,
+        ),
+        _FeatureCard(
+          title: 'Emergency',
+          subtitle: 'Instant alert',
+          icon: CupertinoIcons.phone_fill,
+          color: Colors.redAccent,
+        ),
+      ],
     );
   }
 }
 
-class FeatureCard extends StatelessWidget {
+class _ActionItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _ActionItem({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+      ],
+    );
+  }
+}
+
+class _VitalInfo extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final IconData icon;
+  const _VitalInfo({required this.label, required this.value, required this.unit, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: AppTheme.secondaryColor.withValues(alpha: 0.6), size: 22),
+        const SizedBox(height: 8),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(text: value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+              TextSpan(text: ' $unit', style: const TextStyle(fontSize: 12, color: Colors.white54)),
+            ],
+          ),
+        ),
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white30, letterSpacing: 1)),
+      ],
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color iconColor;
-  final Color glowColor;
+  final Color color;
 
-  const FeatureCard({
-    super.key,
+  const _FeatureCard({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.iconColor,
-    required this.glowColor,
+    required this.color,
   });
 
   @override
@@ -250,29 +279,16 @@ class FeatureCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  spreadRadius: -2,
-                ),
-              ],
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
           const Spacer(),
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.w400),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(subtitle, style: const TextStyle(color: Colors.white38, fontSize: 12)),
         ],
       ),
     );
