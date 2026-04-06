@@ -77,8 +77,8 @@ serve(async (req) => {
     } else if (category === 'Prescription' && extractionJson.medicines) {
       const medicines = extractionJson.medicines.map((m: any) => ({
         profile_id,
-        medicine_name: m.name || m.medicine_name,
-        dosage: m.dose || m.dosage,
+        name: m.name || m.medicine_name,
+        dose: m.dose || m.dosage,
         frequency: m.frequency,
         duration: m.duration,
         document_id,

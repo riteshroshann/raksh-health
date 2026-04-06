@@ -132,28 +132,18 @@ class UploadController extends Notifier<UploadState> {
 
       final documentId = insertResult['id'];
 
-      // 6. AI PIPELINE STEP 1: OCR-Document
-      state = state.copyWith(statusMessage: 'Scanning text with Google Vision AI...');
-      final ocrResponse = await _supabase.functions.invoke('ocr-document', body: {
+      // 6. AI PIPELINE: Combined OCR & Extraction
+      state = state.copyWith(statusMessage: 'Reading & analyzing with AI...');
+      final response = await _supabase.functions.invoke('process-document', body: {
         'document_id': documentId,
         'file_url': fileUrl,
-      });
-
-      if (ocrResponse.status != 200) throw 'OCR failed: ${ocrResponse.data}';
-      final ocrText = ocrResponse.data['ocr_text'];
-
-      // 7. AI PIPELINE STEP 2: Extract-Health-Data
-      state = state.copyWith(statusMessage: 'Extracting medical data with Claude AI...');
-      final extractionResponse = await _supabase.functions.invoke('extract-health-data', body: {
-        'document_id': documentId,
-        'ocr_text': ocrText,
         'category': state.selectedDocType,
         'profile_id': profileId,
       });
 
-      if (extractionResponse.status != 200) throw 'Extraction failed: ${extractionResponse.data}';
-
-      state = state.copyWith(isUploading: false, statusMessage: 'Analysis complete!');
+      if (response.status != 200) throw 'AI processing failed: ${response.data}';
+      
+      state = state.copyWith(isUploading: false, statusMessage: 'Analysis complete! ✓');
       return true;
     } catch (e) {
       state = state.copyWith(isUploading: false, error: e.toString());

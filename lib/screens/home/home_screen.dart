@@ -7,6 +7,8 @@ import 'package:raksh_health/repositories/auth_repository.dart';
 import 'package:raksh_health/repositories/profile_repository.dart';
 import 'package:raksh_health/features/documents/upload_document_screen.dart';
 import 'package:raksh_health/features/vault/document_list_screen.dart';
+import 'package:raksh_health/features/medicines/medicines_screen.dart';
+import 'package:raksh_health/features/vitals/vitals_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<Widget> _screens = [
     const _HomeDashboard(),
     const DocumentListScreen(),
+    const MedicinesScreen(),
     const UploadDocumentScreen(),
   ];
 
@@ -80,6 +83,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               label: 'Vault'
             ),
             BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.capsule), 
+              activeIcon: Icon(CupertinoIcons.capsule_fill), 
+              label: 'Medicines'
+            ),
+            BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.add_circled), 
               activeIcon: Icon(CupertinoIcons.plus_circle_fill), 
               label: 'Upload'
@@ -108,7 +116,7 @@ class _HomeDashboard extends ConsumerWidget {
             const SizedBox(height: 32),
             _buildQuickActions(context),
             const SizedBox(height: 32),
-            _buildVitalsCard(),
+            _buildVitalsCard(ref),
             const SizedBox(height: 32),
             _buildGridActions(),
             const SizedBox(height: 100),
@@ -155,27 +163,33 @@ class _HomeDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildVitalsCard() {
+  Widget _buildVitalsCard(WidgetRef ref) {
+    final vitalsAsync = ref.watch(latestVitalsProvider);
+
     return GlassContainer(
-      child: const Padding(
-        padding: EdgeInsets.all(20.0),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Real-time Vitals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Icon(CupertinoIcons.waveform_path_ecg, size: 18, color: AppTheme.secondaryColor),
               ],
             ),
-            SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _VitalInfo(label: 'Weight', value: '72', unit: 'kg', icon: CupertinoIcons.gauge),
-                _VitalInfo(label: 'Sleep', value: '7.5', unit: 'hrs', icon: CupertinoIcons.moon),
-                _VitalInfo(label: 'BPM', value: '72', unit: 'bpm', icon: CupertinoIcons.heart),
-              ],
+            const SizedBox(height: 24),
+            vitalsAsync.when(
+              data: (vitals) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _VitalInfo(label: 'Weight', value: vitals['Weight']!, unit: 'kg', icon: CupertinoIcons.gauge),
+                  _VitalInfo(label: 'Sleep', value: vitals['Sleep']!, unit: 'hrs', icon: CupertinoIcons.moon),
+                  _VitalInfo(label: 'BPM', value: vitals['BPM']!, unit: 'bpm', icon: CupertinoIcons.heart),
+                ],
+              ),
+              loading: () => const Center(child: CupertinoActivityIndicator(color: Colors.white70)),
+              error: (_, __) => const Text('Error loading vitals', style: TextStyle(color: Colors.white24, fontSize: 12)),
             ),
           ],
         ),
