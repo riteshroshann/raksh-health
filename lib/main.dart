@@ -55,7 +55,9 @@ class RakshHealthApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Raksh Health',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme(context),
+      darkTheme: AppTheme.darkTheme(context),
+      themeMode: ThemeMode.system, // Support both modes
       home: authState.when(
         data: (state) {
           if (state.session != null) {

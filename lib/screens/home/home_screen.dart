@@ -1,14 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:raksh_health/config/app_theme.dart';
-import 'package:raksh_health/widgets/glass_container.dart';
-import 'package:raksh_health/repositories/auth_repository.dart';
+import 'package:raksh_health/widgets/glass_card.dart';
+import 'package:raksh_health/widgets/spatial_background.dart';
 import 'package:raksh_health/repositories/profile_repository.dart';
 import 'package:raksh_health/features/documents/upload_document_screen.dart';
 import 'package:raksh_health/features/vault/document_list_screen.dart';
 import 'package:raksh_health/features/medicines/medicines_screen.dart';
-import 'package:raksh_health/features/vitals/vitals_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,76 +19,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const _HomeDashboard(),
+    const _HomeDashboardView(),
     const DocumentListScreen(),
     const MedicinesScreen(),
-    const UploadDocumentScreen(),
+    const Center(child: Text("Settings")), // Placeholder for Settings from Prompt
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0A0F1E), Color(0xFF1A1F3D), Color(0xFF0A0F1E)],
-              ),
+    return SpatialBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: _screens,
             ),
-          ),
-          
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
-        ],
+            
+            // Custom Floating Navigation Bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: _buildFloatingNavBar(),
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      child: GlassContainer(
-        borderRadius: 30,
-        blur: 30,
-        opacity: 0.1,
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.secondaryColor,
-          unselectedItemColor: Colors.white24,
-          showSelectedLabels: true,
-          showUnselectedLabels: false,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.house), 
-              activeIcon: Icon(CupertinoIcons.house_fill), 
-              label: 'Home'
+  Widget _buildFloatingNavBar() {
+    final size = MediaQuery.of(context).size;
+    
+    return Center(
+      child: GlassCard(
+        width: size.width * 0.7,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        borderRadius: 40,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _NavBarIcon(
+              icon: CupertinoIcons.house,
+              isActive: _currentIndex == 0,
+              onTap: () => setState(() => _currentIndex = 0),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.lock_shield), 
-              activeIcon: Icon(CupertinoIcons.shield_fill), 
-              label: 'Vault'
+            _NavBarIcon(
+              icon: CupertinoIcons.sparkles,
+              isActive: _currentIndex == 1,
+              onTap: () => setState(() => _currentIndex = 1),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.capsule), 
-              activeIcon: Icon(CupertinoIcons.capsule_fill), 
-              label: 'Medicines'
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.add_circled), 
-              activeIcon: Icon(CupertinoIcons.plus_circle_fill), 
-              label: 'Upload'
+            _NavBarIcon(
+              icon: CupertinoIcons.settings,
+              isActive: _currentIndex == 3,
+              onTap: () => setState(() => _currentIndex = 3),
             ),
           ],
         ),
@@ -99,186 +84,216 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _HomeDashboard extends ConsumerWidget {
-  const _HomeDashboard();
+class _HomeDashboardView extends ConsumerWidget {
+  const _HomeDashboardView();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
+    final textTheme = Theme.of(context).textTheme;
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(profileAsync, ref),
-            const SizedBox(height: 32),
-            _buildQuickActions(context),
-            const SizedBox(height: 32),
-            _buildVitalsCard(ref),
-            const SizedBox(height: 32),
-            _buildGridActions(),
-            const SizedBox(height: 100),
-          ],
-        ),
+      bottom: false,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Top App Bar Area
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  profileAsync.when(
+                    data: (profile) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Good Morning,",
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).brightness == Brightness.dark 
+                              ? Colors.white.withOpacity(0.6) 
+                              : Colors.black.withOpacity(0.4),
+                          ),
+                        ),
+                        Text(
+                          "${profile?['full_name']?.split(' ')[0] ?? 'Gladys'}!",
+                          style: textTheme.headlineLarge,
+                        ),
+                      ],
+                    ),
+                    loading: () => const CupertinoActivityIndicator(),
+                    error: (_, __) => const Text("Welcome!"),
+                  ),
+                  const _ProfileAvatar(),
+                ],
+              ),
+            ),
+          ),
+
+          // Primary Action: Upload Document
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (_) => const UploadDocumentScreen()),
+                ),
+                child: GlassCard(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: [
+                      const _AnimatedPulseIcon(),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Upload new document",
+                        style: textTheme.headlineMedium?.copyWith(fontSize: 24),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "AI will analyze and organize your medical records automatically.",
+                        style: textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+          // The 4 Pillars Grid
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.95,
+              children: const [
+                _PillarCard(
+                  title: "Tests",
+                  subtitle: "Sugar, Thyroid, CBC",
+                  icon: CupertinoIcons.drop_fill,
+                  color: Color(0xFFF06292),
+                ),
+                _PillarCard(
+                  title: "Scans",
+                  subtitle: "X-Ray, MRI, CT",
+                  icon: CupertinoIcons.waveform_path_ecg,
+                  color: Color(0xFF64B5F6),
+                ),
+                _PillarCard(
+                  title: "Medicines",
+                  subtitle: "Active & Past",
+                  icon: CupertinoIcons.capsule_fill,
+                  color: Color(0xFF81C784),
+                ),
+                _PillarCard(
+                  title: "Doctor Visits",
+                  subtitle: "Prescriptions",
+                  icon: CupertinoIcons.stethoscope,
+                  color: Color(0xFFFFB74D),
+                ),
+              ],
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildHeader(AsyncValue<Map<String, dynamic>?> profileAsync, WidgetRef ref) {
-    return profileAsync.when(
-      data: (profile) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hello, ${profile?['full_name']?.split(' ')[0] ?? 'User'}', 
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-              const Text('Your health shield is active', 
-                style: TextStyle(fontSize: 14, color: Colors.white54, fontWeight: FontWeight.w300)),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.square_arrow_right, color: Colors.white24),
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
           ),
         ],
       ),
-      loading: () => const LinearProgressIndicator(),
-      error: (_, __) => const Text('Error loading profile'),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _ActionItem(icon: CupertinoIcons.chat_bubble_text, label: 'AI Chat', color: Colors.blueAccent),
-        _ActionItem(icon: CupertinoIcons.calendar, label: 'Booking', color: Colors.purpleAccent),
-        _ActionItem(icon: CupertinoIcons.timer, label: 'Stats', color: Colors.orangeAccent),
-        _ActionItem(icon: CupertinoIcons.ellipsis, label: 'More', color: Colors.tealAccent),
-      ],
-    );
-  }
-
-  Widget _buildVitalsCard(WidgetRef ref) {
-    final vitalsAsync = ref.watch(latestVitalsProvider);
-
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Real-time Vitals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Icon(CupertinoIcons.waveform_path_ecg, size: 18, color: AppTheme.secondaryColor),
-              ],
-            ),
-            const SizedBox(height: 24),
-            vitalsAsync.when(
-              data: (vitals) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _VitalInfo(label: 'Weight', value: vitals['Weight']!, unit: 'kg', icon: CupertinoIcons.gauge),
-                  _VitalInfo(label: 'Sleep', value: vitals['Sleep']!, unit: 'hrs', icon: CupertinoIcons.moon),
-                  _VitalInfo(label: 'BPM', value: vitals['BPM']!, unit: 'bpm', icon: CupertinoIcons.heart),
-                ],
-              ),
-              loading: () => const Center(child: CupertinoActivityIndicator(color: Colors.white70)),
-              error: (_, __) => const Text('Error loading vitals', style: TextStyle(color: Colors.white24, fontSize: 12)),
-            ),
-          ],
+      child: ClipOval(
+        child: Image.network(
+          "https://i.pravatar.cc/150?u=raksh",
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
-
-  Widget _buildGridActions() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.1,
-      children: const [
-        _FeatureCard(
-          title: 'Medicines',
-          subtitle: 'Active tracking',
-          icon: CupertinoIcons.capsule,
-          color: Colors.blueAccent,
-        ),
-        _FeatureCard(
-          title: 'Emergency',
-          subtitle: 'Instant alert',
-          icon: CupertinoIcons.phone_fill,
-          color: Colors.redAccent,
-        ),
-      ],
-    );
-  }
 }
 
-class _ActionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _ActionItem({required this.icon, required this.label, required this.color});
+class _AnimatedPulseIcon extends StatefulWidget {
+  const _AnimatedPulseIcon();
+
+  @override
+  State<_AnimatedPulseIcon> createState() => _AnimatedPulseIconState();
+}
+
+class _AnimatedPulseIconState extends State<_AnimatedPulseIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-          child: Icon(icon, color: color, size: 24),
+    return ScaleTransition(
+      scale: _animation,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
         ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-      ],
+        child: Icon(
+          CupertinoIcons.cloud_upload,
+          size: 40,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
     );
   }
 }
 
-class _VitalInfo extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final IconData icon;
-  const _VitalInfo({required this.label, required this.value, required this.unit, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppTheme.secondaryColor.withValues(alpha: 0.6), size: 22),
-        const SizedBox(height: 8),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(text: value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-              TextSpan(text: ' $unit', style: const TextStyle(fontSize: 12, color: Colors.white54)),
-            ],
-          ),
-        ),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white30, letterSpacing: 1)),
-      ],
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
+class _PillarCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final Color color;
 
-  const _FeatureCard({
+  const _PillarCard({
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -287,22 +302,75 @@ class _FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(16),
+    final textTheme = Theme.of(context).textTheme;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 32,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 24),
           ),
           const Spacer(),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          Text(subtitle, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          Text(
+            title,
+            style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: textTheme.bodyMedium?.copyWith(fontSize: 12),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavBarIcon extends StatelessWidget {
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavBarIcon({
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive 
+      ? Theme.of(context).colorScheme.primary 
+      : (Theme.of(context).brightness == Brightness.dark ? Colors.white30 : Colors.black26);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 28),
+          if (isActive) ...[
+            const SizedBox(height: 4),
+            Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
         ],
       ),
     );
