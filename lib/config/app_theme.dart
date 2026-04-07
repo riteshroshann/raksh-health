@@ -12,6 +12,12 @@ class AppTheme {
   static const Color lightSage = Color(0xFFF4F7F6);
   static const Color warmSand = Color(0xFFF3EAE3);
 
+  // Legacy/Missing Colors (Map to existing or new defaults)
+  static const Color backgroundColor = softObsidian;
+  static const Color primaryColor = Color(0xFF7B5CF0);
+  static const Color secondaryColor = Color(0xFF818CF8);
+  static const Color textPrimary = Colors.white;
+
   static ThemeData lightTheme(BuildContext context) {
     return ThemeData(
       useMaterial3: true,
@@ -48,8 +54,8 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 56),
         ),
       ),
-      cardTheme: CardTheme(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      cardTheme: const CardThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
       ),
     );
   }
@@ -91,8 +97,8 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 56),
         ),
       ),
-      cardTheme: CardTheme(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      cardTheme: const CardThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
       ),
     );
   }

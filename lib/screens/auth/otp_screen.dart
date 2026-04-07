@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:raksh_health/config/app_theme.dart';
-import 'package:raksh_health/widgets/glass_container.dart';
+import 'package:raksh_health/widgets/spatial_background.dart';
+import 'package:raksh_health/widgets/glass_card.dart';
 import 'package:raksh_health/repositories/auth_repository.dart';
 import 'package:raksh_health/repositories/profile_repository.dart';
 import 'package:raksh_health/utils/ui_utils.dart';
@@ -93,29 +95,37 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0A0F1E), Color(0xFF1A1F3D), Color(0xFF0A0F1E)],
-              ),
-            ),
-          ),
-          SafeArea(
+      body: SpatialBackground(
+        child: Stack(
+          children: [
+            SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   const SizedBox(height: 20),
-                   const Text('Verification Code', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-                   const SizedBox(height: 12),
-                   Text('Verification code sent to ${widget.phoneNumber}', style: const TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w300)),
-                   const SizedBox(height: 60),
-                   GlassContainer(
+                  const SizedBox(height: 40),
+                  Text(
+                    'Verification',
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Code sent to ${widget.phoneNumber}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.7),
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  GlassCard(
+                    padding: const EdgeInsets.all(28),
                     child: Column(
                       children: [
                         Row(
@@ -129,8 +139,21 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                                 keyboardType: TextInputType.number,
                                 textAlign: TextAlign.center,
                                 maxLength: 1,
-                                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                                decoration: const InputDecoration(counterText: '', contentPadding: EdgeInsets.zero, border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  contentPadding: EdgeInsets.zero,
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.white.withOpacity(0.2), width: 2),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Color(0xFF818CF8), width: 2),
+                                  ),
+                                ),
                                 onChanged: (value) {
                                   if (value.isNotEmpty) {
                                     if (index < 5) {
@@ -150,16 +173,33 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         const SizedBox(height: 48),
                         Container(
                           width: double.infinity,
-                          height: 56,
+                          height: 60,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [AppTheme.primaryColor, AppTheme.secondaryColor]),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [BoxShadow(color: AppTheme.primaryColor.withValues(alpha: 0.4), blurRadius: 15, offset: const Offset(0, 5))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF818CF8).withOpacity(0.3),
+                                blurRadius: 24,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
                           ),
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _verifyOtp,
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
-                            child: _isLoading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Verify Account'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF818CF8),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : Text(
+                                    'Verify Account',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
@@ -169,7 +209,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   Center(
                     child: Column(
                       children: [
-                        Text(_secondsRemaining > 0 ? 'Resend OTP in 0:${_secondsRemaining.toString().padLeft(2, '0')}' : "Didn't receive the code?", style: const TextStyle(color: Colors.white60)),
+                        Text(
+                          _secondsRemaining > 0 
+                            ? 'Resend OTP in 0:${_secondsRemaining.toString().padLeft(2, '0')}' 
+                            : "Didn't receive the code?", 
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white60),
+                        ),
                         if (_secondsRemaining == 0)
                           TextButton(
                             onPressed: () async {
@@ -186,7 +231,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                                 }
                               }
                             },
-                            child: const Text('Resend Secure OTP', style: TextStyle(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              'Resend Secure OTP', 
+                              style: GoogleFonts.plusJakartaSans(
+                                color: const Color(0xFF818CF8),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -195,7 +246,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               ),
             ),
           ),
-        ],
+            Positioned(
+              top: 20,
+              left: 10,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

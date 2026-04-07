@@ -196,7 +196,7 @@ class _HomeDashboardView extends ConsumerWidget {
                 _PillarCard(
                   title: "Doctor Visits",
                   subtitle: "Prescriptions",
-                  icon: CupertinoIcons.stethoscope,
+                  icon: CupertinoIcons.doc_text_fill,
                   color: Color(0xFFFFB74D),
                 ),
               ],

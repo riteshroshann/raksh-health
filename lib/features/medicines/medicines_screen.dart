@@ -113,7 +113,7 @@ class _MedicineCard extends ConsumerWidget {
                         color: AppTheme.secondaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.pill, color: AppTheme.secondaryColor, size: 24),
+                      child: const Icon(Icons.medication, color: AppTheme.secondaryColor, size: 24),
                     ),
                     const SizedBox(width: 16),
                     Expanded(

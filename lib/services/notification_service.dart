@@ -1,8 +1,7 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:raksh_health/config/supabase_config.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -16,10 +15,8 @@ class NotificationService {
   final _supabase = Supabase.instance.client;
 
   Future<void> initialize() async {
-    // 1. Initialize Timezone for scheduling
     tz.initializeTimeZones();
 
-    // 2. Local Notifications Setup
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -27,11 +24,18 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    await _localNotifications.initialize(
-      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+    const initializationSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
     );
 
-    // 3. Create Android Channel
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse details) {
+        // Handle notification tap
+      },
+    );
+
     const androidChannel = AndroidNotificationChannel(
       'raksh_reminders',
       'Medicine Reminders',
@@ -42,10 +46,9 @@ class NotificationService {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificAction<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
 
-    // 4. Request FCM Permissions
     await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -53,13 +56,10 @@ class NotificationService {
       provisional: false,
     );
 
-    // 5. Sync FCM Token
     await _syncFCMToken();
 
-    // 6. Handle Background Messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 7. Handle Foreground Messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showLocalNotification(message);
     });
@@ -73,7 +73,7 @@ class NotificationService {
         await _supabase.from('profiles').update({'fcm_token': token}).eq('user_id', user.id);
       }
     } catch (e) {
-      print('FCM Token Sync Error: $e');
+      debugPrint('FCM Token Sync Error: $e');
     }
   }
 
@@ -81,10 +81,10 @@ class NotificationService {
     final notification = message.notification;
     if (notification != null) {
       _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'raksh_reminders',
             'Medicine Reminders',
@@ -100,7 +100,7 @@ class NotificationService {
     required int id,
     required String title,
     required String body,
-    required List<String> times, // Format: "HH:mm"
+    required List<String> times,
   }) async {
     for (int i = 0; i < times.length; i++) {
         final timeParts = times[i].split(':');
@@ -115,36 +115,36 @@ class NotificationService {
         }
 
         await _localNotifications.zonedSchedule(
-          id + i, // Unique ID for each time slot
-          title,
-          body,
-          scheduledDate,
-          const NotificationDetails(
+          id: id + i,
+          title: title,
+          body: body,
+          scheduledDate: scheduledDate,
+          notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
               'raksh_reminders',
               'Medicine Reminders',
+              channelDescription: 'Critical notifications for your daily medications.',
               importance: Importance.max,
               priority: Priority.high,
               fullScreenIntent: true,
             ),
           ),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time, // Daily repeat
+          matchDateTimeComponents: DateTimeComponents.time,
         );
     }
   }
 
   Future<void> cancelReminder(int id) async {
-    // We cancel up to 4 slots (max dosage frequency)
     for (int i = 0; i < 4; i++) {
-      await _localNotifications.cancel(id + i);
+      await _localNotifications.cancel(id: id + i);
     }
   }
 }
 
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  print("Handling a background message: ${message.messageId}");
+  if (kDebugMode) {
+    print("Handling a background message: ${message.messageId}");
+  }
 }
